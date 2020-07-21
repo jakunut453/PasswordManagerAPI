@@ -13,8 +13,8 @@ command to make sure all the required modules are present
 
 Run the following MySql commands to initialize the database
 ```
-create table users(  username varchar(10),     password varchar(10),     userid integer)
-create table entry(   userid int,     website varchar(20),     username varchar(10),     password varchar(10)     )
+create table users(username varchar(10), password varchar(10), userid integer)
+create table entry(userid int, website varchar(20), username varchar(10), password varchar(10)     )
 ```
 
 MySql workbench is a nice tool to manage the Database, and Postman is a good tool to test the API.
