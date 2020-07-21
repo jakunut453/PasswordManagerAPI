@@ -1,4 +1,4 @@
-# passwordManagerAPI
+# Password Manager API
 An api made with nodejs for an password manager application. Using express and mysql. All passwords are encrypted using the AES encryption from the crypto-js library
 
 ### Installation
