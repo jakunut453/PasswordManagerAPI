@@ -19,6 +19,7 @@ con.connect(function(err) {
 
 app.use(bodyParser.urlencoded({extended: true}))
 
+// User account registration
 app.post('/app/user', function(req, res){
     var countSql = "select count(*) as totalCount from users";
     con.query(countSql, function (err, result, fields) {
@@ -48,6 +49,7 @@ app.post('/app/user', function(req, res){
     })
 })
 
+// User account login
 app.post('/app/user/auth', function(req, res){
     var searchSql = "select password, userid from users where username = ?";
     con.query(searchSql, [req.body.username], function (err, result) {
@@ -67,6 +69,7 @@ app.post('/app/user/auth', function(req, res){
     });
 })
 
+// List of saved usernames and passwords for different websites
 app.get('/app/sites/list/',function(req,res){
     var searchSql = "select website, username, password from entry where userid = ?";
     con.query(searchSql, [req.query.user], function (err, result) {
@@ -98,6 +101,7 @@ app.get('/app/sites/list/',function(req,res){
     // ])
 })
 
+// Save a new username & password for website
 app.post('/app/sites', function(req, res){
     var userId = req.query.user;
     var cipherpassword = CryptoJS.AES.encrypt(req.body.password, masterPassword).toString();
