@@ -1,13 +1,15 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
-const mysql = require('mysql')
+const mysql = require('mysql');
+var CryptoJS = require('crypto-js');
+var masterPassword = 'your secret key';
 
 var con = mysql.createConnection({
-    host: "localhost",
-    user: "your username",
+    host: "your host name",
+    user: "your user name",
     password: "your password",
-    database: "your db"
+    database: "your db name"
 });
 
 con.connect(function(err) {
@@ -18,7 +20,6 @@ con.connect(function(err) {
 app.use(bodyParser.urlencoded({extended: true}))
 
 app.post('/app/user', function(req, res){
-    // console.log(req.body);
     var countSql = "select count(*) as totalCount from users";
     con.query(countSql, function (err, result, fields) {
         if (err){
@@ -27,11 +28,11 @@ app.post('/app/user', function(req, res){
             })
             throw err;
         } 
-        // console.log(result[0].totalCount);
         var newUserId = result[0].totalCount;
+        var cipherpassword = CryptoJS.AES.encrypt(req.body.password, masterPassword).toString();
         var insertSql = "insert into users (username, password, userid) values ?";
         var values = [
-            [req.body.username, req.body.password, newUserId]
+            [req.body.username, cipherpassword, newUserId]
           ];
           con.query(insertSql, [values], function (err, result) {
             if (err){
@@ -40,7 +41,6 @@ app.post('/app/user', function(req, res){
                 })
                 throw err;
             } 
-            // console.log("Number of records inserted: " + result.affectedRows);
           });
     });
     res.send({
@@ -49,12 +49,12 @@ app.post('/app/user', function(req, res){
 })
 
 app.post('/app/user/auth', function(req, res){
-    console.log(req.body);
     var searchSql = "select password, userid from users where username = ?";
     con.query(searchSql, [req.body.username], function (err, result) {
         if (err) throw err;
-        console.log(result);
-        if(result[0].password == req.body.password){
+        var bytes  = CryptoJS.AES.decrypt(result[0].password, masterPassword);
+        var originalpassword = bytes.toString(CryptoJS.enc.Utf8);
+        if(originalpassword == req.body.password){
             res.send({
                 'status': 'success',
                 'userId': result[0].userid
@@ -68,8 +68,6 @@ app.post('/app/user/auth', function(req, res){
 })
 
 app.get('/app/sites/list/',function(req,res){
-    // console.log(req.body);
-    console.log(req.query.user);
     var searchSql = "select website, username, password from entry where userid = ?";
     con.query(searchSql, [req.query.user], function (err, result) {
         if (err){
@@ -79,6 +77,11 @@ app.get('/app/sites/list/',function(req,res){
             throw err;
         }else{
             console.log(result);
+            for(var i=0;i<result.length;i++){
+                var bytes  = CryptoJS.AES.decrypt(result[i].password, masterPassword);
+                var originalpassword = bytes.toString(CryptoJS.enc.Utf8);
+                result[i].password = originalpassword;
+            }
             res.send(result);
         }
     });
@@ -89,19 +92,18 @@ app.get('/app/sites/list/',function(req,res){
     //        'password': 123 
     //     },
     //     {
-    //         'userName': 'abc',
-    //         'password': 123 
+    //         'userName': 'bcd',
+    //         'password': 456 
     //     }
     // ])
 })
 
 app.post('/app/sites', function(req, res){
-    console.log(req.body);
     var userId = req.query.user;
-    console.log(userId);
+    var cipherpassword = CryptoJS.AES.encrypt(req.body.password, masterPassword).toString();
     var insertSql = "insert into entry (userid, website, username, password) values ?";
     var values = [
-        [userId, req.body.website, req.body.username, req.body.password]
+        [userId, req.body.website, req.body.username, cipherpassword]
         ];
         con.query(insertSql, [values], function (err, result) {
         if (err){
@@ -114,7 +116,6 @@ app.post('/app/sites', function(req, res){
                 'status': 'success'
             })
         }
-        // console.log("Number of records inserted: " + result.affectedRows);
     });
 })
 
